@@ -1,0 +1,142 @@
+---
+
+## 🔹 What is DNAT?
+
+* **NAT (Network Address Translation)** = technique to modify network packet addresses.
+* **DNAT (Destination NAT)** = changes the **destination IP address/port** of a packet.
+* It’s commonly used in firewalls/load balancers.
+
+👉 Example:
+
+* Public IP: `203.0.113.10` (firewall’s external address)
+* DNAT → forwards traffic to internal server `10.0.0.50:443` (web server).
+* To the outside world, it looks like they’re hitting `203.0.113.10`, but internally traffic goes to `10.0.0.50`.
+
+**Target** = the internal system/service that the DNAT rule forwards to.
+
+---
+
+## 🔹 Why is DNAT Used?
+
+1. **Hosting Public Services**
+
+   * Company has a web server inside (10.0.0.50).
+   * Firewall DNATs `203.0.113.10:443` → `10.0.0.50:443`.
+
+2. **VPN / Remote Access**
+
+   * DNAT forwards public VPN requests to internal VPN gateway.
+
+3. **Load Balancing**
+
+   * DNAT distributes incoming traffic across multiple servers.
+
+---
+
+## 🔹 How Attackers Abuse DNAT
+
+1. **Exposing Internal Systems**
+
+   * Misconfigured DNAT may expose RDP, SMB, or DB servers to the internet.
+   * Example: RDP (3389) DNAT → internet → domain controller.
+
+2. **Pivoting / Lateral Movement**
+
+   * If attacker compromises firewall/router, they can create DNAT rules to redirect traffic to their own system.
+   * Example: DNAT `443` traffic to attacker’s host for MITM.
+
+3. **Backdoor / Data Exfiltration**
+
+   * Malicious insider sets DNAT → forwards sensitive traffic outside.
+   * Example: DNAT internal DB queries to attacker-controlled server.
+
+---
+
+## 🔹 Use Cases for SOC Detection
+
+### ✅ 1. Detect DNAT to Sensitive Ports/Hosts
+
+* Alert if DNAT rule forwards traffic from internet to:
+
+  * Domain Controller
+  * SMB shares (445)
+  * RDP (3389)
+  * Database (3306, 1433)
+
+👉 Suspicious because these services should not be exposed externally.
+
+---
+
+### ✅ 2. Detect Unusual DNAT Configuration Changes
+
+* Monitor firewall/router logs for **new DNAT rules created/modified**.
+* Alert if:
+
+  * Rule created outside change window.
+  * Rule created by non-admin account.
+
+👉 This could be attacker persistence or insider threat.
+
+---
+
+### ✅ 3. Detect DNAT Traffic Spikes
+
+* Monitor traffic volume hitting DNAT targets.
+* Alert if:
+
+  * Sudden spike to a specific DNAT server.
+  * Unusual geolocation (e.g., RDP DNAT from foreign IPs).
+
+👉 Could indicate brute force or DDoS against exposed service.
+
+---
+
+### ✅ 4. Detect Shadow IT DNAT Rules
+
+* Sometimes admins set up “temporary” DNAT for testing (e.g., expose dev server to internet).
+* SOC should detect and escalate these.
+
+---
+
+## 🔹 Example Splunk Detection Queries
+
+**1. DNAT Traffic to RDP/SMB**
+
+```spl
+index=firewall_logs action=allowed dnat_target_port IN (3389,445)
+| stats count by src_ip, dnat_target_ip, dnat_target_port
+```
+
+**2. DNAT Rule Change**
+
+```spl
+index=firewall_config "add dnat" OR "modify dnat"
+| table _time, user, rule_id, src_ip, dnat_target_ip, dnat_target_port
+```
+
+**3. DNAT Anomalous Traffic Spike**
+
+```spl
+index=firewall_logs action=allowed
+| stats count by dnat_target_ip, dnat_target_port, src_country
+| where count > 1000
+```
+
+---
+
+## 🔹 MITRE ATT\&CK Mapping
+
+* **T1071 – Application Layer Protocol** → using DNAT to exfiltrate data.
+* **T1090 – Proxy** → DNAT abused for traffic redirection.
+* **T1190 – Exploit Public-Facing Application** → DNAT exposing vulnerable services.
+* **T1133 – External Remote Services** → RDP/SMB exposed via DNAT.
+
+---
+
+✅ **In short:**
+
+* **DNAT target** = the internal system/service a DNAT rule forwards traffic to.
+* **Legit use:** Expose web, VPN, or load-balanced services.
+* **SOC focus:** Detect misused DNAT exposing sensitive services, unauthorized DNAT changes, abnormal DNAT traffic, or exfiltration via DNAT.
+
+---
