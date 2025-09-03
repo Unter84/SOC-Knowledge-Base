@@ -1,0 +1,54 @@
+⸻
+
+🔹 What It Means
+
+During the TLS/SSL handshake, the client tells the server which SSL/TLS version it wants to use.
+	•	Example: “Hi, I support TLS 1.0, 1.1, 1.2”
+
+The server then chooses one it also supports.
+	•	Example: “Okay, let’s use TLS 1.2”
+
+If the client suggests a protocol version that the server does not recognize or does not allow, the handshake fails.
+👉 That’s when you see: “unknown SSL protocol version.”
+
+⸻
+
+🔹 Why Does It Happen?
+	1.	Outdated Clients
+	•	A very old client (browser, VPN client, script) is trying SSLv2 or SSLv3.
+	•	Citrix ADC only allows TLS 1.2/1.3 → handshake fails.
+	2.	Malicious/Scanning Tools
+	•	Attackers often scan with tools (like nmap --script ssl-enum-ciphers) that send weird/unsupported versions just to test the server’s response.
+	•	Log shows “unknown SSL protocol version.”
+	3.	Misconfigured Devices
+	•	A device (proxy, load balancer, IoT device) using an incorrect or non-standard SSL library tries to connect.
+
+⸻
+
+🔹 Example
+	•	A normal user on a modern browser tries to log into Citrix Gateway → TLS 1.2 handshake succeeds.
+	•	An old Windows XP machine using IE6 (which only supports SSLv3) tries → Citrix Gateway rejects → “unknown SSL protocol version.”
+	•	An attacker runs a scan with a fake SSL version string → also rejected with same error.
+
+⸻
+
+🔹 SOC Perspective
+	•	Benign: A few scattered events, especially from old clients, are usually harmless.
+	•	Suspicious:
+	•	A burst of these errors from many IPs → reconnaissance or SSL/TLS version probing.
+	•	If followed by successful logins from the same IP, it could be an attacker probing then switching to a valid client.
+
+⸻
+
+🔹 Alerting Ideas
+	•	🚨 Alert if multiple handshake failures with “unknown SSL protocol version” occur from the same IP in a short time.
+	•	🚨 Alert if a sudden spike in these errors comes from multiple IPs (sign of scanning campaign).
+	•	Use these logs to baseline normal clients → filter out noise (like one old printer always failing).
+
+⸻
+
+✅ In short:
+“Unknown SSL protocol version” means the client tried to use an SSL/TLS version that Citrix ADC doesn’t support or recognize.
+	•	Could be old/incompatible clients, but often it’s attackers scanning or probing SSL settings.
+
+⸻
