@@ -1,0 +1,94 @@
+---
+
+## 🔹 What is NetBIOS Name Service (NBNS)?
+
+* **NetBIOS (Network Basic Input/Output System)** is an old Windows protocol (from the 1980s–90s).
+* It was used for **local network communication** before DNS was widely adopted.
+* **NetBIOS Name Service (NBNS)** runs on UDP port **137** and is used to:
+
+  * Resolve machine names to IP addresses in a **LAN** (local area network).
+  * Example: Your PC wants to find `HR-PC` → it broadcasts an NBNS query → HR-PC responds with its IP.
+
+✅ Today, NBNS is **mostly legacy**, replaced by DNS. But Windows systems still generate it sometimes (especially for file sharing / SMB).
+
+---
+
+## 🔹 What Does “Host Tried NBNS to the Internet” Mean?
+
+* Normally, NBNS queries should **stay inside your local network**.
+* If you see them going **out to the internet**, it means:
+
+  * A machine is asking *“Who is HR-PC?”* and accidentally sending that request to an external IP.
+  * This is usually **not intended** — it leaks internal hostnames/domain names.
+
+---
+
+## 🔹 Why Is This a Problem?
+
+1. **Information Leakage**
+
+   * Your internal machine names (`HR-PC`, `FINANCE-SRV1`, `DC01`) could be exposed to external servers.
+   * Attackers can learn your **internal naming convention**, Active Directory domain name, or even usernames.
+
+2. **Exploitation (NBNS Poisoning)**
+
+   * Attackers can set up a rogue NBNS responder on the internet.
+   * Your host sends `Who is FILESERVER?` → attacker replies “That’s me!” → your host might try to authenticate → sends NTLM credentials.
+   * This leads to **credential theft / relay attacks** (MITRE ATT\&CK T1557.001 – LLMNR/NBNS Poisoning).
+
+3. **Malware Behavior**
+
+   * Some malware uses NBNS/WINS lookups as part of **reconnaissance** or **C2 communication fallback**.
+   * Seeing NBNS go outbound is sometimes a sign of infection.
+
+---
+
+## 🔹 Example Scenario
+
+* **Normal (inside LAN):**
+
+  * Your laptop: “Who is HR-PC?” → HR-PC replies with its IP → connection works.
+
+* **Abnormal (to internet):**
+
+  * Your laptop: “Who is FILESERVER?” → query accidentally sent to `8.8.8.8` or an attacker’s server.
+  * Attacker: “I’m FILESERVER” → laptop sends NTLM auth → attacker now has password hash.
+
+---
+
+## 🔹 SOC Perspective
+
+* **Benign but risky:** Misconfigurations where Windows falls back to NBNS/LLMNR when DNS fails, and the query leaks out.
+* **Suspicious:** Large volume of NBNS outbound → scanning, malware beaconing.
+* **Dangerous:** NBNS responses from external IPs → could mean **credential theft attack in progress**.
+
+---
+
+## 🔹 What to Do
+
+1. **Contain**
+
+   * Block NBNS (UDP/137) traffic to the internet at firewall.
+   * It should never leave the LAN.
+
+2. **Investigate**
+
+   * Which host generated it?
+   * Was it one-off (misconfig) or persistent (malware)?
+
+3. **Mitigate**
+
+   * Disable **LLMNR/NBNS** in Windows via Group Policy if not needed.
+   * Enforce DNS only for name resolution.
+   * Monitor for NTLM authentication attempts to external servers.
+
+---
+
+✅ **In short:**
+“**Host tried NetBIOS Name Service to the internet**” = a Windows machine attempted to use the old NBNS protocol (UDP/137) to resolve names, but instead of keeping it inside the LAN, it went out to the internet.
+
+* Normally harmless misconfig,
+* But can leak hostnames and even credentials,
+* And can be exploited by attackers via **NBNS poisoning**.
+
+---
