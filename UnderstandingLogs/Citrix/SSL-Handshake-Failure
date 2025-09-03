@@ -1,0 +1,61 @@
+🔹 First, What’s an SSL Handshake?
+
+When a user or system tries to connect securely (HTTPS, VPN, ICA over SSL) to your Citrix server, they go through a TLS/SSL handshake:
+	1.	Client says: “Hello, I want to talk securely — here are my supported ciphers.”
+	2.	Server replies: “Hello, I accept this cipher, here’s my certificate.”
+	3.	Keys are exchanged → secure channel is established.
+
+If this process fails → you get SSL handshake failure.
+
+⸻
+
+🔹 What Does “SSL Handshake Failure” Mean in Citrix Logs?
+
+It means the secure connection could not be established between client and Citrix server.
+This can happen for a variety of reasons:
+	•	Invalid client certificate (if mutual TLS is required).
+	•	Unsupported cipher suite (client and server can’t agree on encryption).
+	•	Expired/invalid server certificate (client rejects it).
+	•	Protocol mismatch (e.g., client wants TLS 1.0, server only allows TLS 1.2+).
+	•	Network issues (connection dropped before handshake completed).
+	•	Brute-force/probing attempts by attackers (e.g., bots scanning Citrix gateway with weak SSL requests).
+
+⸻
+
+🔹 Example Scenarios
+
+✅ Legitimate (Technical Issue)
+	•	A user’s VPN client is outdated and only supports TLS 1.0.
+	•	Your Citrix ADC requires TLS 1.2 or higher.
+	•	Result → SSL handshake failure in logs.
+
+🚨 Suspicious (Attack)
+	•	An attacker is scanning your Citrix Gateway on port 443, testing SSL protocols and ciphers.
+	•	Repeated SSL handshake failures from thousands of random IPs could indicate reconnaissance or DDoS attempts.
+
+⸻
+
+🔹 Why It Matters for SOC
+	1.	Operational Issue:
+	•	A few handshake failures = normal (old clients, bad configs).
+	•	But if many users report connection issues, it could mean expired cert or protocol misconfig.
+	2.	Security Indicator:
+	•	If you see many handshake failures from unusual IPs, it could mean:
+	•	Reconnaissance scan (attacker fingerprinting SSL/TLS setup).
+	•	DDoS attempt (flooding with bad handshakes).
+
+⸻
+
+🔹 Example Alert Use Cases in SIEM
+	•	🚨 High number of SSL handshake failures from single IP within 5 minutes → possible brute-force/probing.
+	•	🚨 Spike in handshake failures across multiple IPs simultaneously → possible DDoS attempt.
+	•	🚨 Handshake failures followed by successful login from same IP → attacker probing, then succeeding.
+
+⸻
+
+✅ In short:
+“SSL handshake failure” = Citrix ADC/NetScaler could not establish a secure connection with the client.
+	•	Sometimes harmless (misconfig, old client).
+	•	Sometimes a red flag (scanning, DDoS, or attempted exploitation).
+
+⸻
