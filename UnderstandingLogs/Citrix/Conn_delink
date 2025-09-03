@@ -1,0 +1,70 @@
+⸻
+
+🔹 What conn_delink Means
+	•	In Citrix NetScaler/ADC, connections are tracked in a connection table (like a session database).
+	•	When a connection is no longer linked to that table (e.g., after termination, timeout, or reset), the system logs conn_delink.
+
+👉 In simple terms:
+conn_delink = “This connection is being removed from the active session table.”
+
+⸻
+
+🔹 When Does It Happen?
+	1.	Normal Session Closure
+	•	User logs off VPN or closes a Citrix ICA session → NetScaler “delinks” the connection from its tracking.
+	2.	Timeouts
+	•	Idle timeout (user inactive).
+	•	TCP/SSL handshake never completed → connection dropped.
+	3.	Errors / Forced Closure
+	•	Connection reset by client/server.
+	•	SSL/TLS version mismatch → session aborted.
+	4.	Abnormal / Suspicious Behavior
+	•	Attacker scanning → thousands of short-lived connections get delinked right away.
+	•	DoS/DDoS → lots of half-open connections being flushed.
+
+⸻
+
+🔹 Example Scenarios
+
+✅ Normal
+	•	Log: conn_delink for user session after 2 hours.
+👉 User ended VPN session properly.
+
+⚠️ Suspicious
+	•	Logs: conn_delink seen hundreds of times per minute from random IPs.
+👉 Could be botnet scanning or flooding Citrix Gateway.
+
+⚠️ Troubleshooting
+	•	Repeated conn_delink for one user right after login attempt.
+👉 Could mean misconfigured client, expired certificate, or network issue.
+
+⸻
+
+🔹 Difference vs conn-terminate
+	•	conn-terminate = the connection was explicitly closed (by user logout, error, or timeout).
+	•	conn-delink = the connection is being unlinked/removed from ADC’s session tracking (like garbage collection).
+
+💡 Often, you’ll see conn-terminate → followed by conn-delink for the same session.
+
+⸻
+
+🔹 SOC Usefulness
+	•	Baseline: A few conn-delink events per user session = normal.
+	•	Red Flags:
+	•	Spikes of conn-delink without matching user activity → scanning/DoS.
+	•	Frequent conn-delink for the same user at login → config issue or brute-force attempts.
+
+⸻
+
+🔹 Alert Ideas
+	•	🚨 Alert if more than X conn_delink events per minute from same IP → possible scan/flood.
+	•	🚨 Alert if conn_delink follows failed authentication repeatedly → brute force.
+	•	🚨 Correlate with SSL handshake failures → attacker probing SSL/TLS configs.
+
+⸻
+
+✅ In short:
+	•	conn_delink = Citrix ADC removed a connection from its active session table.
+	•	Normal when a user session ends, but suspicious if you see bursts, repeats, or patterns linked to failed logins/scans.
+
+⸻
