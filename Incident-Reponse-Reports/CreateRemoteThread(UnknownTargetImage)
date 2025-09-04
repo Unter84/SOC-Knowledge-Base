@@ -1,0 +1,116 @@
+# 📝 Incident Report: Sysmon CreateRemoteThread (sccmrdpsystem.exe → csrss.exe)
+
+**Incident ID:** IR-2025-0904-001  
+**Date:** 2025-09-04  
+**Reported by:** SIEM (Splunk – Sysmon Event ID 8 Detection)  
+**Severity:** Medium (after triage – benign SCCM/Qualys agent activity)
+
+---
+
+## 1. Executive Summary
+A **Sysmon CreateRemoteThread event (Event ID 8)** was detected on host `<HOSTNAME>`. The event showed **`sccmrdpsystem.exe`** creating a remote thread in **`csrss.exe`**. Injection into `csrss.exe` is normally highly suspicious, but after step-by-step analysis, the activity was linked to **legitimate Microsoft SCCM Remote Control functionality**, occurring in parallel with **Qualys endpoint agent activity**, both running under the **SYSTEM logon session (0x3e7)**.  
+No malicious activity or compromise was found.
+
+---
+
+## 2. Timeline of Events
+| Time (UTC) | Event Source | Event ID | Details |
+|------------|--------------|----------|---------|
+| T0         | Sysmon       | 8        | CreateRemoteThread – Source: `sccmrdpsystem.exe`, Target: `csrss.exe`, LogonId: 0x3e7 |
+| T0         | Sysmon       | 1        | `sccmrdpsystem.exe` created, parent process unresolved |
+| T0         | Sysmon       | 1        | `qualys.exe` observed with the same LogonId (0x3e7) |
+| T1         | Sysmon       | 1        | `sccmrdpsystem.exe` verified – Microsoft signed, expected path |
+| T1         | Sysmon       | 1        | `qualys.exe` verified – Qualys signed, expected path |
+| T2         | Sysmon       | 3        | No outbound network from `csrss.exe` |
+| T3         | TI / EDR     | -        | No malicious verdicts for either binary |
+| T4         | Analyst Review | -      | Correlation concluded: benign SCCM Remote Control + Qualys overlap |
+
+---
+
+## 3. Investigation Steps & Event Linking
+The following workflow was followed to correlate and validate events:
+
+1. **Initial Alert Review**  
+   - Sysmon Event ID 8 showed CreateRemoteThread activity.  
+   - **SourceImage** = `sccmrdpsystem.exe`, **TargetImage** initially unclear.  
+
+2. **Target Process Resolution**  
+   - Using the **TargetProcessId** field from the alert, correlated with Sysmon Event ID 1 logs.  
+   - Found that the process was **`csrss.exe`**, a SYSTEM-level Windows process.  
+
+3. **Parent Process Analysis**  
+   - Attempted to identify which process launched `sccmrdpsystem.exe`.  
+   - ParentProcessId field was available, but no matching Event ID 1 was found (likely due to fast termination or logging gap).  
+   - This raised suspicion initially.  
+
+4. **Parallel Event Review (Same Timestamp)**  
+   - Pivoted on events within the same timeframe (±1–2 seconds).  
+   - Found **Qualys agent process** activity (`qualys.exe`) recorded under the **same LogonId (0x3e7)** as the CreateRemoteThread event.  
+
+5. **Logon Session Context**  
+   - Confirmed LogonId `0x3e7` → **LocalSystem session**, which is expected for both SCCM and Qualys agents.  
+
+6. **Binary Validation**  
+   - Verified `sccmrdpsystem.exe` signature → Microsoft, correct path (`C:\Windows\CCM\SystemTemp\`).  
+   - Verified `qualys.exe` signature → Qualys Inc., correct installation path.  
+
+7. **Behavioral Checks**  
+   - Queried Sysmon Event ID 3 (network connections) for the target PID (`csrss.exe`) → **no outbound network observed**.  
+   - No follow-on suspicious process creation or registry persistence detected.  
+
+8. **Conclusion**  
+   - Based on binary validation, SYSTEM logon context, and parallel Qualys activity, the event was classified as **expected SCCM Remote Control behavior coinciding with Qualys scanning activity**.  
+   - No evidence of masquerading or malicious injection was found.  
+
+---
+
+## 4. Analysis
+- **Normal threat model:** CreateRemoteThread into `csrss.exe` is usually linked to malware (Cobalt Strike, privilege escalation, stealth injection).  
+- **Observed behavior:** Source was a **Microsoft-signed binary (`sccmrdpsystem.exe`)** linked to SCCM Remote Control.  
+- **Correlated context:** Same SYSTEM logon session also showed **Qualys agent** activity, supporting benign operational behavior.  
+- **Risk reduction:** No malicious follow-on activity observed (no C2, no persistence, no credential theft).  
+
+---
+
+## 5. Root Cause
+- Sysmon Event ID 8 triggered due to **legitimate SCCM Remote Control injection into csrss.exe**.  
+- The event coincided with **Qualys agent scans**, both running under SYSTEM.  
+- Alert was a **false positive**, misinterpreted as malicious injection due to the sensitive target (`csrss.exe`).
+
+---
+
+## 6. Impact Assessment
+- **Systems affected:** Single host `<HOSTNAME>`  
+- **Accounts involved:** SYSTEM (LogonId 0x3e7)  
+- **Business impact:** None  
+- **Compromise evidence:** None  
+
+---
+
+## 7. Containment & Remediation
+- No containment required (verified benign).  
+- Actions performed:
+  - Binary validation for `sccmrdpsystem.exe` and `qualys.exe`.  
+  - Confirmed SYSTEM logon context (0x3e7).  
+  - Verified no abnormal network/process activity followed the event.  
+
+---
+
+## 8. Recommendations
+- **Monitoring**  
+  - Suppress/allowlist `sccmrdpsystem.exe → csrss.exe` CreateRemoteThread events when signed & in expected paths.  
+  - Continue alerting on all other CreateRemoteThread injections into system processes.  
+- **Hardening**  
+  - If SCCM Remote Control is not widely required, disable via SCCM client policy.  
+  - Keep Sysmon + EDR monitoring for CreateRemoteThread + ProcessAccess events for non-whitelisted binaries.  
+- **Documentation**  
+  - Add this case to the SOC playbook as **“Known Good: SCCM Remote Control injection into csrss.exe”**.  
+
+---
+
+## 9. Disposition
+**Final Classification:** **False Positive (Benign SCCM Remote Control + Qualys Agent Activity)**  
+**Status:** Closed – Monitoring Only  
+**Next Review:** Re-open if `sccmrdpsystem.exe` appears in an unexpected path, unsigned, or if Qualys overlap is absent.  
+
+---
