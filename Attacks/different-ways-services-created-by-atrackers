@@ -1,0 +1,153 @@
+
+
+🛡️ Service Creation by Attackers & SIEM Detection
+
+Attackers often create or modify Windows services to maintain persistence and escalate privileges. Services usually run with SYSTEM-level rights and auto-start with Windows, making them a prime target.
+
+⸻
+
+🔹 1. Using sc.exe create (Command-Line)
+
+Attack Example
+
+sc.exe create EvilService binPath= "C:\malware\evil.exe" start= auto
+
+Detection in SIEM
+	•	Event ID 4688 → Process creation (sc.exe create)
+	•	Event ID 4697 → Service installation (if enabled)
+	•	Event ID 7045 → “A new service was installed” (System log)
+
+KQL Example
+
+SecurityEvent
+| where EventID in (4688, 4697)
+| where CommandLine has_all ("sc.exe", "create") or CommandLine has "binPath="
+
+
+⸻
+
+🔹 2. PowerShell New-Service
+
+Attack Example
+
+New-Service -Name EvilService -BinaryPathName "C:\malware\evil.exe" -StartupType Automatic
+
+Detection in SIEM
+	•	Event ID 4104 → ScriptBlock logging (“New-Service”)
+	•	Event ID 7045 → New service creation
+
+KQL Example
+
+SecurityEvent
+| where EventID == 4104
+| where ScriptBlockText has "New-Service"
+
+
+⸻
+
+🔹 3. Registry Key Creation (Service Registry Entries)
+
+Attack Path
+
+HKLM\SYSTEM\CurrentControlSet\Services\<ServiceName>
+
+Detection in SIEM
+	•	Sysmon Event ID 13 → Registry value set (ImagePath)
+
+KQL Example
+
+Sysmon
+| where EventID == 13
+| where TargetObject startswith "HKLM\\System\\CurrentControlSet\\Services"
+
+
+⸻
+
+🔹 4. WMI-Based Service Creation
+
+Attack Example
+
+(Get-WmiObject -List Win32_Service).Create("MaliciousService","Malicious Service","C:\malware\evil.exe",16,0,"LocalSystem","")
+
+Detection in SIEM
+	•	Event ID 4688 → wmic service creation
+	•	Sysmon Event ID 1 → wmiprvse.exe spawning unusual processes
+	•	Event IDs 5857/5858 → WMI Activity
+
+KQL Example
+
+SecurityEvent
+| where EventID == 4688
+| where CommandLine has "wmic" and CommandLine has "service"
+
+
+⸻
+
+🔹 5. PsExec or Remote Service Abuse
+
+Attack Behavior
+	•	PsExec installs a temporary service PSEXESVC on remote host.
+
+Detection in SIEM
+	•	Event ID 7045 → Service PSEXESVC installed
+	•	Event ID 4624 (LogonType 3) → Network logon by admin account
+
+KQL Example
+
+SecurityEvent
+| where EventID == 7045
+| where ServiceName == "PSEXESVC"
+
+
+⸻
+
+🔹 6. Service Hijacking (Existing Services)
+
+Attack Behavior
+	•	Modify registry ImagePath of legitimate service to point to malicious binary.
+
+Detection in SIEM
+	•	Sysmon Event ID 13 → Registry modification
+	•	Look for ImagePath pointing to suspicious paths (e.g., %TEMP%, C:\Users\Public\).
+
+KQL Example
+
+Sysmon
+| where EventID == 13
+| where TargetObject endswith "\\ImagePath"
+| where Details matches regex @"(Users|AppData|Temp)"
+
+
+⸻
+
+🔹 7. LOLBins (InstallUtil / msiexec)
+
+Attack Behavior
+	•	Abuses built-in binaries (InstallUtil.exe, msiexec.exe) to install services.
+
+Detection in SIEM
+	•	Event ID 4688 → Process creation with InstallUtil.exe, msiexec.exe
+	•	Event ID 7045 → New service registered
+
+KQL Example
+
+SecurityEvent
+| where EventID == 4688
+| where Process has_any ("InstallUtil.exe", "msiexec.exe")
+
+
+⸻
+
+🔹 Summary Table
+
+Attack Method	Event IDs to Monitor	Key Detection Clues
+sc.exe create	4688, 4697, 7045	CommandLine “sc create”, new service logs
+PowerShell New-Service	4104, 7045	ScriptBlock “New-Service”
+Registry service entry	Sysmon 13	New subkeys under Services\*, ImagePath mods
+WMI Win32_Service	4688, Sysmon 1, 5857/5858	wmic … service or WMI spawning processes
+PsExec (PSEXESVC)	7045, 4624 (LogonType 3)	ServiceName = PSEXESVC
+Service hijacking	Sysmon 13	ImagePath edits to odd paths
+LOLBins (InstallUtil, etc.)	4688, 7045	Rare executables + new services
+
+
+⸻
