@@ -1,0 +1,112 @@
+# 🔐 Active Directory – Bidirectional Forest Trust
+
+## 📖 Introduction
+In Active Directory (AD), a **forest** is the top-level security boundary that contains one or more domains.  
+Sometimes organizations need to **share resources across forests** (for example, after a merger or for collaboration).  
+This is where **forest trusts** come in.
+
+---
+
+## 🔑 What is a Forest Trust?
+A **forest trust** is a trust relationship established between **two separate AD forests**.
+
+- It allows authentication requests to pass between forests.
+- Users in one forest can access resources in the other (if explicitly permitted).
+
+There are two types:
+1. **One-way trust** – Only one forest trusts the other.
+2. **Two-way (Bidirectional) trust** – Both forests trust each other.
+
+---
+
+## 🔁 Bidirectional Forest Trust
+A **bidirectional forest trust** is a **two-way trust** between two Active Directory forests.  
+
+- Both forests trust each other.  
+- Authentication can flow **in both directions**.  
+- Users from either forest can be granted permissions on resources in the other forest.  
+
+⚠️ Note: The trust only enables authentication.  
+Actual access still depends on **permissions (ACLs, group memberships, NTFS settings, etc.)**.
+
+---
+
+## 🖼 Example Scenario
+**Company A** (`corpA.local`) and **Company B** (`corpB.local`) merge.  
+
+They need employees from both companies to share resources (e.g., file servers, SharePoint, printers).  
+
+👉 They establish a **bidirectional forest trust** between the two forests.
+
+### What Happens?
+- A user in `corpA.local` can be granted access to a file share in `corpB.local`.  
+- A user in `corpB.local` can log into a SharePoint site in `corpA.local`.  
+
+---
+
+## 📊 ASCII Diagram
+
+      +-----------------+                       +-----------------+
+      |   Forest A      |                       |   Forest B      |
+      |  corpA.local    | <---- TRUST ---->     |  corpB.local    |
+      +-----------------+                       +-----------------+
+             ^   |                                       ^   |
+             |   v                                       |   v
+  Users from A can access resources in B      Users from B can access resources in A
+
+---
+
+## ⚠️ Potential Attack Scenarios
+
+Although forest trusts are useful, they can also be **abused by attackers** if not secured properly.
+
+### 1. 🛑 Compromised Forest Trust Abuse
+- If attackers compromise **Domain Admin or Enterprise Admin** in **Forest A**,  
+  they can pivot into **Forest B** because of the bidirectional trust.  
+- This breaks the idea of a “security boundary” — one forest’s compromise spreads.
+
+### 2. 🎭 SID History Abuse
+- Attackers can inject **forged SIDs** into Kerberos tickets.  
+- With a forest trust, these can be honored across forests, granting unauthorized access.
+
+### 3. 🕵️ Kerberos Ticket Attacks
+- **Golden Ticket** or **Silver Ticket** attacks in one forest may allow attackers to create tickets  
+  that work in the trusted forest.  
+- Because the trust passes Kerberos authentications, forged tickets can be used cross-forest.
+
+### 4. 🚪 Misconfigured Trust Settings
+- If the trust is set to **“Forest-wide authentication”**, every authenticated user in Forest A  
+  is automatically trusted in Forest B.  
+- Attackers can exploit this to move laterally.  
+- Safer configuration: **“Selective Authentication”** (explicit permissions required).
+
+---
+
+## 🛡️ Security Best Practices
+
+1. **Use Selective Authentication**  
+   - Grant access only to specific groups or resources, not the entire forest.
+
+2. **Tiered Admin Model**  
+   - Keep high-privilege accounts isolated within each forest.  
+   - Avoid using the same admin accounts across forests.
+
+3. **Monitor Trust Usage**  
+   - Enable logging for cross-forest authentication events (Event IDs 4769, 4624).  
+   - Monitor for unusual patterns (e.g., mass logins from one forest to another).
+
+4. **Limit SID History**  
+   - Disable or carefully monitor the use of SID History in trusts.
+
+5. **Incident Response Planning**  
+   - Treat the compromise of **one forest’s admin** as if it compromises **both forests**.  
+   - Have containment strategies in place.
+
+---
+
+## 📚 References
+- [Microsoft Docs – Forest Trusts](https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/plan/forest-design-guide)  
+- [MITRE ATT&CK – Kerberos Golden Ticket](https://attack.mitre.org/techniques/T1558/001/)  
+- [SpecterOps – Forest Trust Attacks](https://posts.specterops.io/)  
+
+---
