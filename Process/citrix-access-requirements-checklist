@@ -1,0 +1,77 @@
+# Citrix Access Requirements Checklist
+
+This document captures the access requirements and dependencies for enabling secure, reliable access to the client SOC environment via Citrix.
+
+---
+
+## 🔑 Account & Authentication
+- [ ] **AD Account Creation**
+  - Confirm account request/approval process.
+  - Define SLA for new account provisioning.
+- [ ] **Password Policy**
+  - Clarify password expiry duration.
+  - Define reset/unlock process (self-service or helpdesk).
+  - Confirm 24×7 support availability for lockouts.
+- [ ] **Multi-Factor Authentication (MFA)**
+  - Confirm if MFA is required for Citrix login.
+  - Specify MFA type (authenticator app, SMS, push, token).
+
+---
+
+## 🖥️ Citrix Client Requirements
+- [ ] **Client Version**
+  - Identify supported Citrix Workspace version.
+  - Provide official download/source link.
+- [ ] **Installation**
+  - Provide any prerequisites (OS version, EDR/antivirus compatibility).
+  - Validate installation permissions (requires IT/System team ticket).
+
+---
+
+## 🌐 Connectivity & Network
+- [ ] **URLs/Endpoints**
+  - Provide Citrix Gateway URL(s).
+  - Confirm if additional portals are required (e.g., StoreFront).
+- [ ] **Firewall/Ports**
+  - List required TCP/UDP ports for Citrix connectivity.
+  - Identify proxy exceptions (if any).
+- [ ] **VPN Requirements**
+  - Confirm if VPN is required before Citrix login or if Citrix is internet-exposed.
+
+---
+
+## 📊 Session Restrictions
+- [ ] **Clipboard / Copy-Paste**
+  - Confirm if enabled or restricted.
+- [ ] **File Download / Upload**
+  - Confirm policies on file transfer.
+- [ ] **Screenshots / Printing**
+  - Clarify restrictions inside Citrix session.
+- [ ] **Splunk Usage**
+  - Confirm ability to export Splunk reports or if limited to view-only.
+
+---
+
+## ⚠️ Resilience & Support
+- [ ] **Failure Scenarios**
+  - Document common Citrix failure modes (infra downtime, account lock, licensing issues).
+  - Define fallback access method (if any).
+- [ ] **Support Contacts**
+  - Provide Citrix support desk details.
+  - Define SLA for access issue resolution.
+
+---
+
+## 🏗️ Future Transition (Onsite SOC)
+- [ ] **Access Model Changes**
+  - Confirm if Citrix access will continue once SOC moves onsite.
+  - Define whether Citrix will remain as a backup method.
+
+---
+
+## ✅ Deliverables from Client
+- [ ] AD account details & provisioning process
+- [ ] Citrix Workspace supported version & download link
+- [ ] Gateway URL(s) and firewall port requirements
+- [ ] Access restrictions (clipboard, file transfer, etc.)
+- [ ] Escalation matrix for Citrix access issues
