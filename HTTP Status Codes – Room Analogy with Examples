@@ -218,3 +218,142 @@ By mapping codes to hotel room situations, we can better understand what servers
 👉 Example: Captive Wi-Fi portal asks you to log in before browsing.
 
 ⸻
+# 🛡️ HTTP Status Codes – Normal vs Suspicious Signs  
+
+This guide explains **HTTP status codes** using the **hotel room analogy**, with a focus on identifying when requests may be **malicious or suspicious**.  
+Useful for **incident response, security monitoring, and log analysis**.  
+
+---
+
+| **Code(s)** | **Normal Use** | **Suspicious / Malicious Sign** |
+|-------------|----------------|---------------------------------|
+| **1xx (100–103)** | Progress messages during upload/handshake. | Large numbers of open “in-progress” connections → **Slowloris DoS**. |
+| **200** | Page loads successfully. | Thousands of 200s on `/login` → **successful brute-force**. |
+| **201** | New account/resource created. | Spike in 201s → **fake/spam account creation**. |
+| **202/204** | Accepted, no content. | Bots probing APIs silently. |
+| **301/302** | Page moved or temp redirect. | Redirects to **phishing/open redirect exploit**. |
+| **303/307/308** | Proper redirects. | Exploited for **open redirect attacks**. |
+| **304** | Cached resource not modified. | Usually safe. |
+| **400** | Mistyped/malformed request. | Flood of malformed requests → **fuzzing / injection attempts**. |
+| **401** | Unauthenticated access. | Many repeated 401s → **brute-force login**. |
+| **403** | Authenticated but forbidden. | Brute-force, privilege escalation attempts. |
+| **404** | Mistyped or missing page. | High volume → **directory/file scanning (recon)**. |
+| **405** | Wrong HTTP method used. | Attackers testing PUT/DELETE → **method probing**. |
+| **406** | Unsupported Accept header. | Bots fuzzing content negotiation. |
+| **407** | Proxy requires authentication. | Malicious traffic via misconfigured proxy. |
+| **408** | Client timeout. | Repeated → **Slow HTTP DoS**. |
+| **409** | Version conflict. | Bot-driven API misuse. |
+| **410** | Resource gone. | Attackers probing removed but once-sensitive endpoints. |
+| **411/412** | Length/Precondition checks. | Exploit attempts with malformed headers. |
+| **413** | Payload too large. | Oversized uploads → **DoS attempt**. |
+| **414** | URL too long. | Attackers testing **buffer overflow/path traversal**. |
+| **415** | Unsupported file type. | Uploading malicious executables. |
+| **416** | Invalid range. | Attackers fuzzing byte ranges. |
+| **417** | Expectation failed. | Abused by exploit tools. |
+| **418** | Teapot joke. | If seen in logs → scanning tool / prank traffic. |
+| **421** | Wrong host. | Recon tools misrouting traffic. |
+| **422–424** | WebDAV errors. | Attackers abusing WebDAV endpoints. |
+| **425** | Request too early. | Bot traffic misbehaving in TLS handshake. |
+| **426** | Upgrade required. | Force attempts to downgrade security. |
+| **428** | Preconditions needed. | Exploit tools failing checks. |
+| **429** | Too many requests. | Legit traffic surge OR **rate-limited bot/DDoS flood**. |
+| **431** | Headers too big. | Malicious **header injection**. |
+| **451** | Blocked for legal reasons. | Unexpected block → censorship/tampering. |
+| **500** | Internal server error. | **SQLi/XSS payloads** crashing app. |
+| **501** | Not implemented. | Bots testing weird/unimplemented methods. |
+| **502/504** | Bad gateway / timeout. | **DDoS or upstream exhaustion**. |
+| **503** | Server unavailable. | Overload → active **DoS/DDoS**. |
+| **505** | HTTP version not supported. | Attackers probing old protocol support. |
+| **506–510** | Rare errors. | Misconfigurations exploited. |
+| **511** | Network login required. | Captive portal hijacking attempts. |
+
+---
+
+✅ **Tip for Security Teams:**  
+- **Scattered errors** → usually normal.  
+- **Spikes, patterns, or repeated errors from same IP** → likely **malicious activity**.  
+
+---
+⸻
+
+🛡️ Detecting Suspicious or Malicious Requests with HTTP Codes
+
+Not every error means an attack — sometimes it’s just user error.
+But patterns of responses (frequency, endpoints, timing) can signal malicious behavior such as scanning, brute force, DDoS, or exploitation attempts.
+
+⸻
+
+🔍 1xx: Informational
+
+These are usually benign — rarely used in malicious traffic.
+	•	100–103: Suspicious if massively repeated (e.g., attacker trying to keep many upload connections open to exhaust resources — a form of Slowloris attack).
+
+⸻
+
+✅ 2xx: Success
+
+Looks “fine” but context matters:
+	•	200: If thousands of 200 responses are logged against admin/login.php, could be a brute-force attempt that is succeeding.
+	•	201: Sudden flood of account creations (201 responses) could be fake/spam registrations.
+	•	202/204: Attackers may use them in probing APIs silently (successful but no visible output).
+
+⸻
+
+🔁 3xx: Redirection
+
+Malicious signs:
+	•	301/302: If sensitive endpoints suddenly redirect to unknown domains → could be phishing or server compromise.
+	•	303/307/308: Repeated redirects to suspicious URLs might indicate open redirect vulnerability abuse (attackers trick users into phishing sites).
+
+⸻
+
+⚠️ 4xx: Client Errors (most useful for spotting malicious probing 🚨)
+
+These often indicate attackers trying and failing:
+	•	400: A spike in malformed requests (weird headers, SQL injection payloads) → injection attack attempts.
+	•	401/403: Many repeated 401s/403s on login/admin pages → brute force or credential stuffing.
+	•	404: Attackers scanning for hidden files (/wp-admin, /etc/passwd) → reconnaissance/scanning activity.
+	•	405: Attackers testing unsupported methods like PUT/DELETE → method probing.
+	•	406: Could indicate attacker fuzzing with strange content-type headers.
+	•	408: Many timeouts → attempt at Slow HTTP DoS.
+	•	409: Could signal automated tools clashing on API calls.
+	•	410: Attackers probing for “deleted” resources (exploiting outdated endpoints).
+	•	413: Upload attempts with oversized payloads → possible DoS attempt.
+	•	414: Extremely long URLs → often buffer overflow or path traversal attempts.
+	•	415: Attackers trying unexpected formats (e.g., uploading executables).
+	•	418: If it ever appears in logs, could signal testing tools or bots.
+	•	421/422/423: Malicious automation that misroutes or abuses WebDAV features.
+	•	425: Attackers retrying too early → automated bot activity.
+	•	429: Legitimate under load, but also indicates rate-limiting blocked a flood (likely bot or DDoS).
+	•	451: Rare, but if sensitive resources suddenly blocked “for legal reasons,” could signal tampering or censorship attack.
+
+👉 Key insight: If you see a lot of 404/401/403 from a single IP quickly, that’s a scanner or brute-force bot.
+
+⸻
+
+💥 5xx: Server Errors (often mean attackers pushed server too hard 🚨)
+	•	500: If triggered by weird inputs, could mean attacker found an exploitable bug (e.g., SQL injection caused crash).
+	•	501: Requests for unsupported methods → probing attempts.
+	•	502/504: Could mean backend overwhelmed by botnets or DDoS.
+	•	503: Frequent service unavailable → active DoS/DDoS attack.
+	•	505: Bots using outdated/unsupported HTTP versions to bypass filters.
+	•	506–510: Rare codes; if they appear, could indicate misconfigurations being exploited.
+	•	511: Attackers hijacking captive portals or network login flows.
+
+⸻
+
+🔑 Quick Examples of Malicious Indicators
+	•	Repeated 404s → Attacker scanning for hidden files (recon).
+	•	Spike in 401/403 → Brute force attempts on login.
+	•	Many 413/414 → Oversized payloads or long URLs → DoS attempts.
+	•	500 errors after injections → Attacker found a vulnerable endpoint.
+	•	503 flood → DDoS taking server offline.
+	•	Unusual 3xx redirects → Phishing or open redirect abuse.
+
+⸻
+
+✅ Rule of thumb:
+	•	Few errors scattered = normal.
+	•	Spikes in specific error codes from same IPs = likely malicious.
+
+⸻
