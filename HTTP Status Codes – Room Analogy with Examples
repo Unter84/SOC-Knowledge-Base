@@ -1,0 +1,210 @@
+⸻
+
+🔍 1xx: Informational Rooms
+
+1️⃣ 100: The knock was received, go ahead 🚦
+👉 Example: When browser sends a large file upload, server replies “continue sending.”
+
+2️⃣ 101: Switching the type of entrance (protocol change) 🔁
+👉 Example: When upgrading from HTTP to WebSocket connection.
+
+3️⃣ 102: Still preparing the room, please wait 🕒
+👉 Example: A WebDAV request takes long, server says “still processing.”
+
+4️⃣ 103: Giving early hints about what’s inside 🛠️
+👉 Example: Server pushes preload hints (like CSS/JS) before full response.
+
+⸻
+
+✅ 2xx: Success Rooms
+
+5️⃣ 200: The room opened successfully 👍
+👉 Example: You visit a webpage and content loads correctly.
+
+6️⃣ 201: A new room has been built for you 🎉
+👉 Example: API creates a new user account.
+
+7️⃣ 202: The request accepted, but still working on it ⏳
+👉 Example: Server queues a job (like video processing) for later.
+
+8️⃣ 203: Info is from a copy, not the original 📑
+👉 Example: Response comes from a proxy with modified headers.
+
+9️⃣ 204: The door opened but nothing to show inside 🗒️
+👉 Example: A form submitted successfully, but no content is returned.
+
+🔟 205: The room asks you to refresh/reset your view 🔄
+👉 Example: After form submission, client should reset input fields.
+
+1️⃣1️⃣ 206: Only part of the room was shown 📦
+👉 Example: A video stream delivers only a chunk of data (range requests).
+
+1️⃣2️⃣ 207: Multiple outcomes for different parts ⚙️
+👉 Example: WebDAV returns mixed success/failure for batch file ops.
+
+1️⃣3️⃣ 208: The same room already reported earlier 🔁
+👉 Example: A repeated reference in a multi-status response.
+
+1️⃣4️⃣ 226: The room applied special transformations 🔍
+👉 Example: A resource was returned with server-side modifications applied.
+
+⸻
+
+🔁 3xx: Redirection Rooms
+
+1️⃣5️⃣ 300: Many possible rooms, choose one 🔀
+👉 Example: Multiple language versions available, client must pick.
+
+1️⃣6️⃣ 301: The room has permanently moved 🏠➡️
+👉 Example: Old blog URL redirects to a new domain.
+
+1️⃣7️⃣ 302: The room is temporarily found elsewhere 🔄
+👉 Example: A product page temporarily points to a promo URL.
+
+1️⃣8️⃣ 303: The room can be found under a different entrance ↩️
+👉 Example: After form submission, user redirected to “thank you” page.
+
+1️⃣9️⃣ 304: The room hasn’t changed since your last visit 💤
+👉 Example: Browser cache says file hasn’t changed, no new download.
+
+2️⃣0️⃣ 305: Use a proxy door to enter 🚪 (deprecated)
+👉 Example: Server instructs client to access via proxy.
+
+2️⃣1️⃣ 306: This door is unused 🚷
+👉 Example: Reserved but no longer in use.
+
+2️⃣2️⃣ 307: Temporary redirect — same method used 🔁
+👉 Example: POST request redirected but must remain POST.
+
+2️⃣3️⃣ 308: Permanent redirect — always use new entrance 📍
+👉 Example: API endpoint permanently changed to a new URL.
+
+⸻
+
+⚠️ 4xx: Client Error Rooms
+
+2️⃣4️⃣ 400: Bad request — your knock was broken 🧐
+👉 Example: Malformed JSON sent to API.
+
+2️⃣5️⃣ 401: No permissions to enter this room 🚫
+👉 Example: Request to a protected API without login token.
+
+2️⃣6️⃣ 402: Payment required 💳 (reserved)
+👉 Example: Reserved for paywall/subscription services.
+
+2️⃣7️⃣ 403: Forbidden — you cannot enter 🚷
+👉 Example: Logged in but lacking admin rights.
+
+2️⃣8️⃣ 404: The room was not found ❓
+👉 Example: Visiting a non-existent webpage.
+
+2️⃣9️⃣ 405: Wrong way of knocking 🛑
+👉 Example: Sending POST when only GET is allowed.
+
+3️⃣0️⃣ 406: The room cannot provide your requested format ⚙️
+👉 Example: Asking for XML but server only provides JSON.
+
+3️⃣1️⃣ 407: Must show ID to proxy 🪪
+👉 Example: Proxy requires authentication.
+
+3️⃣2️⃣ 408: You took too long ⏳
+👉 Example: Slow request timed out.
+
+3️⃣3️⃣ 409: Conflict inside the room 🔀
+👉 Example: Editing a record that was already modified by someone else.
+
+3️⃣4️⃣ 410: The room once existed but is gone 🚷
+👉 Example: Deleted blog post permanently removed.
+
+3️⃣5️⃣ 411: Must provide content length 📏
+👉 Example: Upload without specifying size.
+
+3️⃣6️⃣ 412: Preconditions not met ❌
+👉 Example: If-Match header fails during update.
+
+3️⃣7️⃣ 413: You’re carrying too much 🛄
+👉 Example: Upload file exceeds server’s max size.
+
+3️⃣8️⃣ 414: Address too long 📝
+👉 Example: URL with excessively long query string.
+
+3️⃣9️⃣ 415: Format not supported 📂
+👉 Example: Uploading an image in unsupported format.
+
+4️⃣0️⃣ 416: Requested part doesn’t exist 🔍
+👉 Example: Asking for byte range outside file size.
+
+4️⃣1️⃣ 417: Expectations failed ❗
+👉 Example: Server can’t fulfill “Expect” header.
+
+4️⃣2️⃣ 418: I’m a teapot ☕
+👉 Example: Joke code from RFC 2324.
+
+4️⃣3️⃣ 421: Knocked on the wrong house 🏚️
+👉 Example: Request routed to wrong virtual host.
+
+4️⃣4️⃣ 422: Can’t process entity 🤔
+👉 Example: JSON syntax valid but values invalid.
+
+4️⃣5️⃣ 423: Room is locked 🔒
+👉 Example: File locked in WebDAV.
+
+4️⃣6️⃣ 424: Dependency failed 😬
+👉 Example: One request fails, dependent one can’t continue.
+
+4️⃣7️⃣ 425: Too early ⏱️
+👉 Example: Request sent before TLS handshake finished.
+
+4️⃣8️⃣ 426: Must upgrade ⬆️
+👉 Example: Client must switch to HTTPS.
+
+4️⃣9️⃣ 428: Precondition required ✅
+👉 Example: API demands If-Match header for updates.
+
+5️⃣0️⃣ 429: Too many knocks 🚦
+👉 Example: Exceeded API rate limit.
+
+5️⃣1️⃣ 431: Headers too bulky 📦
+👉 Example: Oversized HTTP headers in request.
+
+5️⃣2️⃣ 451: Room blocked for legal reasons ⚖️
+👉 Example: Page censored due to court order.
+
+⸻
+
+💥 5xx: Server Error Rooms
+
+5️⃣3️⃣ 500: Something broke inside 🔧
+👉 Example: Server bug caused crash.
+
+5️⃣4️⃣ 501: Not prepared for this request 🏗️
+👉 Example: API endpoint not implemented yet.
+
+5️⃣5️⃣ 502: Bad gateway 🚪
+👉 Example: Reverse proxy got invalid response from backend.
+
+5️⃣6️⃣ 503: Room temporarily unavailable 📴
+👉 Example: Server down for maintenance.
+
+5️⃣7️⃣ 504: Upstream too slow ⌛
+👉 Example: Proxy timed out waiting for backend.
+
+5️⃣8️⃣ 505: Wrong key for the lock 🔑
+👉 Example: Client uses unsupported HTTP version.
+
+5️⃣9️⃣ 506: Negotiation loop 🔁
+👉 Example: Variant negotiation misconfigured.
+
+6️⃣0️⃣ 507: No more storage 📂
+👉 Example: WebDAV server out of space.
+
+6️⃣1️⃣ 508: Infinite loop 🔄
+👉 Example: Server stuck in recursive requests.
+
+6️⃣2️⃣ 510: Extensions needed ⚙️
+👉 Example: Client must provide extra headers/extensions.
+
+6️⃣3️⃣ 511: Network authentication required 🛂
+👉 Example: Captive Wi-Fi portal asks you to log in before browsing.
+
+⸻
