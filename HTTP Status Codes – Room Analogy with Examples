@@ -1,3 +1,13 @@
+Think of the internet as a giant hotel. Every URL is like a room inside that hotel. When your browser (the guest) knocks on the door (sends a request), the server (hotel staff) answers with a status code — telling you what’s going on with that room.
+
+ 	• 1xx (Informational): The staff hears your knock and says, “Hold on, I’m checking”.
+	•	2xx (Success): The staff opens the door and lets you in — everything went fine.
+	•	3xx (Redirection): The staff says, “This room has moved, try that other door instead.”
+	•	4xx (Client Error): You (the guest) did something wrong — wrong door, no key, or you’re not allowed in.
+	•	5xx (Server Error): The hotel staff messed up — the room is broken, under repair, or they can’t serve you right now.
+
+By mapping codes to hotel room situations, we can better understand what servers are telling us when browsing the web.
+
 ⸻
 
 🔍 1xx: Informational Rooms
