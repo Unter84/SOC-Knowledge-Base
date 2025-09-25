@@ -1,0 +1,122 @@
+⸻
+
+1️⃣ AD Replication Abuse — DCSync & DCShadow
+
+🔹 How the attack works
+	•	DCSync:
+	•	Attackers with replication rights (like Domain Admins or accounts with Replicating Directory Changes permissions) can pretend to be a Domain Controller and request replication data from a real DC.
+	•	This allows them to pull password hashes for all domain accounts → enabling pass-the-hash, cracking, persistence.
+	•	Tools: mimikatz lsadump::dcsync.
+	•	DCShadow:
+	•	Attackers inject a rogue Domain Controller into AD replication topology.
+	•	Then they can push malicious changes (e.g., create a backdoor admin account, add SIDHistory) directly into AD without generating normal change events.
+	•	Tools: mimikatz lsadump::dcshadow.
+
+🔹 Log traces
+	•	Security Event ID 4662: “An operation was performed on an object” with replication GUIDs (indicates replication rights used).
+	•	Directory Service logs: replication topology or replication requests (1311, 1988, 2042).
+	•	Azure AD / AD logs showing new DC registration or topology change without admin change control.
+
+🔹 SOC use
+	•	If you see replication events coming from non-DC hosts, that’s a red flag → likely DCSync.
+	•	If you see new replication partner / topology changes outside of normal patching, could be DCShadow.
+
+⸻
+
+2️⃣ Malicious LDAP Enumeration
+
+🔹 How the attack works
+	•	LDAP is the protocol AD uses for directory queries (users, groups, computers).
+	•	Attackers who get any domain credentials often query AD to:
+	•	List all users and groups.
+	•	Find SPNs for Kerberoasting.
+	•	Discover where Domain Admins log in.
+	•	Tools: ldapsearch, PowerShell (Get-ADUser), BloodHound, SharpHound.
+
+🔹 Log traces
+	•	Event ID 1644 (Directory Service): Logs expensive LDAP queries (queries that return large results or scan wide parts of AD).
+	•	Security Event IDs (4662, object access) if auditing is enabled.
+
+🔹 SOC use
+	•	Normal apps query AD too, but if you see large, unusual LDAP queries from endpoints that aren’t apps/servers, that’s suspicious.
+	•	Example: A workstation suddenly querying for all users with SPNs.
+
+⸻
+
+3️⃣ Insecure LDAP Binds
+
+🔹 How the attack works
+	•	By default, AD allows simple LDAP binds over cleartext (TCP/389).
+	•	If apps or services use this, attackers can:
+	•	Sniff credentials in plaintext on the wire.
+	•	Use LDAP relay attacks (abuse authentication to escalate privileges).
+	•	Safer: use LDAPS (TCP/636) or enforce secure binds.
+
+🔹 Log traces
+	•	Event IDs 2887–2889 in Directory Service:
+	•	2887: Insecure LDAP bind occurred.
+	•	2888: How many insecure binds in last 24 hrs.
+	•	2889: Which account made them.
+
+🔹 SOC use
+	•	Flag accounts or apps that still use insecure binds → they’re high risk.
+	•	If you see a spike of insecure binds from unexpected hosts, an attacker may be relaying LDAP sessions.
+
+⸻
+
+4️⃣ Unusual Object Creation / Group Membership Changes
+
+🔹 How the attack works
+	•	Attackers, once inside AD, escalate privileges by:
+	•	Creating a new user and adding to Domain Admins.
+	•	Adding themselves to Enterprise Admins or sensitive groups.
+	•	Modifying existing objects (e.g., Service Principal Names for Kerberoasting).
+
+🔹 Log traces
+	•	Security Log Events:
+	•	4720: User account created
+	•	4728: Added to Global Group
+	•	4729: Removed from Global Group
+	•	4732: Added to Local Group
+	•	4733: Removed from Local Group
+	•	4722: User enabled
+	•	Directory Service logs: may also show replication/object change traces.
+
+🔹 SOC use
+	•	Build Splunk correlation searches: If new account is created and immediately added to Domain Admins, alert high.
+	•	Cross-reference with change control tickets — if no change control, escalate.
+
+⸻
+
+5️⃣ AD Service Disruption Attempts
+
+🔹 How the attack works
+	•	Attackers may try to crash or corrupt AD services to disrupt operations or cover tracks.
+	•	Examples:
+	•	Force replication errors (preventing admin changes from spreading).
+	•	Tamper with AD database (NTDS.dit).
+	•	Shut down AD DS service.
+
+🔹 Log traces
+	•	Directory Service event IDs:
+	•	1311, 1566: replication errors
+	•	2042: tombstone expired → replication blocked
+	•	2100–2200: database/service errors
+	•	Unexpected service stops/restarts (System log).
+
+🔹 SOC use
+	•	If a critical DC suddenly logs replication failures with multiple peers, check if it’s attacker-driven.
+	•	Correlate with suspicious activity on that DC (logons, processes).
+
+⸻
+
+📌 Summary for Analysts
+	•	DCSync/DCShadow = abusing replication → steal hashes or inject malicious changes.
+	•	LDAP Enumeration = large directory queries → attacker recon.
+	•	Insecure LDAP Binds = weak configs attackers can sniff/relay.
+	•	Object/Group Changes = persistence & privilege escalation.
+	•	Service Disruption = crashing or tampering with AD to hide activity or deny service.
+
+👉 All these leave traces in ActiveDirectory-DomainService logs (and Security logs). SOC analysts monitor for unusual patterns in those event IDs to spot early-stage domain compromise.
+
+⸻
