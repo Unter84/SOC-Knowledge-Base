@@ -1,0 +1,131 @@
+⸻
+
+🧾 Incident Report
+
+Incident Title:
+
+Outbound LDAP Connection to External Microsoft IP (Port 389)
+
+Incident ID:
+
+SOC-2025-10-07-001
+
+Reported Date/Time:
+
+2025-10-07, 04:30 AM (UTC)
+
+Reported By:
+
+[Your Name / SOC Monitoring System]
+
+Severity:
+
+Low
+
+⸻
+
+1. Summary
+
+An alert was triggered by the security monitoring system indicating that a workstation established an outbound connection to an external IP address over port 389 (LDAP).
+Since LDAP is generally used for internal Active Directory communication, such outbound activity was reviewed for potential data exfiltration, misconfiguration, or compromise.
+
+⸻
+
+2. Detection Details
+
+Field	Details
+Alert Name	Outbound LDAP Connection to External Host
+Detection Source	Firewall / Network IDS
+Source Host	[Hostname / IP of workstation]
+Destination IP	[External Microsoft IP Address]
+Destination Port	389 (LDAP)
+Detection Time	2025-10-07 04:30 AM
+Bytes Out	0
+Bytes In	260 bytes, 70 bytes (two short events)
+Number of Events	2
+Reputation Check	Clean (Microsoft Corporation – ASN AS8075)
+Running Processes	osquery.exe, ServiceNow agent
+
+
+⸻
+
+3. Investigation Steps
+	1.	Verified IP ownership using WHOIS and ASN lookup tools.
+	•	Result: IP belongs to Microsoft Corporation (AS8075), reputable and widely recognized.
+	2.	Reviewed process activity on the host around the event timestamp.
+	•	Only osquery and ServiceNow agent processes were active.
+	•	No PowerShell, cmd, VBS, or suspicious binaries observed.
+	3.	Reviewed firewall logs.
+	•	Outbound session initiated, but no payload bytes transmitted (0 bytes out).
+	•	Only small inbound responses received (260B, 70B).
+	•	Total of 2 connection attempts observed.
+	4.	Checked DNS and reputation.
+	•	DNS resolution mapped to a valid Microsoft domain range.
+	•	No malicious or suspicious reputation from VirusTotal, Talos, or AbuseIPDB.
+	5.	Validated EDR telemetry (if available).
+	•	No suspicious behavior, privilege escalation, or process injection detected.
+
+⸻
+
+4. Findings
+
+Observation	Analysis
+External IP owned by Microsoft (AS8075)	✅ Legitimate vendor infrastructure
+Connection on LDAP port (389)	⚠️ Unusual for external destination, may indicate misconfiguration
+No outbound data	✅ No sign of data exfiltration or credential leak
+Processes active: osquery, ServiceNow agent	✅ Trusted enterprise agents
+Connection frequency: 2 times only	✅ Non-persistent behavior
+IP reputation	✅ Clean and widely used for Microsoft services
+
+🔍 Additional Observations
+
+Only Two Short Events
+	•	Very short-lived, non-persistent activity.
+	•	If it were malicious (data exfiltration, tunneling, or credential leak), you’d expect many repeated connections and significant bidirectional byte transfer.
+
+Normal Processes at the Time
+	•	osquery and ServiceNow agent both make outbound checks to Microsoft cloud and internal endpoints.
+	•	It’s plausible one of them triggered a lookup, telemetry check, or even a mis-targeted LDAP ping (e.g., a library trying to query AD information that defaulted to a public resolver).
+
+Assessment:
+The connection was short-lived, transmitted no outbound data, and was directed to a legitimate Microsoft network. This behavior aligns with benign or misconfigured agent behavior, possibly resulting from:
+	•	An osquery or ServiceNow module briefly attempting to reach Microsoft services or perform an external directory test.
+	•	A Windows component performing a one-time telemetry or connectivity check.
+
+⸻
+
+5. Conclusion
+
+This event is classified as a False Positive / Benign Network Activity.
+There are no indicators of compromise, no data exfiltration, and no evidence of malicious intent.
+
+The most probable cause is a legitimate agent (osquery or ServiceNow) generating a transient LDAP query or telemetry check that reached a Microsoft-owned IP over port 389.
+
+⸻
+
+6. Recommendations
+
+Recommendation	Purpose
+Restrict outbound LDAP (port 389) at perimeter firewalls.	Prevent any accidental or malicious LDAP traffic to the Internet.
+Allow only internal LDAP/LDAPS (389/636) to known internal domain controllers.	Enforce secure and expected directory communications.
+Review osquery / ServiceNow configurations.	Ensure no external LDAP lookups or misconfigured plugins exist.
+Continue monitoring for recurrence.	Validate if similar outbound attempts appear again.
+Document this as a known benign event.	Reduce noise in future correlation or SIEM rules.
+
+
+⸻
+
+Incident Status:
+
+✅ Closed – False Positive / Benign Event
+
+Closure Date:
+
+2025-10-07
+
+Reviewed By:
+
+[Your Name / SOC Analyst]
+[Team / Department]
+
+⸻
