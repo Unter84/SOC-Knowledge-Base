@@ -1,0 +1,85 @@
+Incident Report
+
+Date of Report: October 6, 2025
+Incident Title: Outbound Connection Attempts to Suspicious Domain – ipfs.io
+Reported By: Security Operations Center (SOC)
+Severity Level: Low
+Status: Closed – False Positive
+
+⸻
+
+1. Incident Overview
+
+On October 5, 2025, at approximately 01:00 AM, the Security Operations Center (SOC) observed multiple outbound connection attempts (29 events) from an internal workstation to a suspicious domain – ipfs.io (destination IP: 209.94.90.1).
+All connection attempts were successfully blocked by the firewall.
+
+Subsequent investigation revealed that the activity originated while the user was browsing the legitimate website mexc.com (a cryptocurrency trading platform). The site contained embedded content hosted on the IPFS network, which triggered the blocked connection attempts observed in the firewall logs.
+
+No indicators of compromise or malicious activity were found on the user’s system.
+
+⸻
+
+2. Understanding IPFS and ipfs.io (Simplified)
+
+What is IPFS?
+The InterPlanetary File System (IPFS) is a decentralized, peer-to-peer network used to store and share files across multiple computers instead of a single central server.
+Every piece of content on IPFS is identified by a unique digital “fingerprint” called a Content Identifier (CID) — like a hash value. This allows data to be verified and accessed from multiple sources worldwide.
+
+What is ipfs.io?
+ipfs.io is a public gateway that lets normal web browsers access IPFS content.
+Think of it as a bridge between the traditional internet (HTTP) and the IPFS network. When someone visits a link like https://ipfs.io/ipfs/<CID>, the gateway fetches that file from the IPFS network and delivers it to the user.
+
+Example:
+If a webpage uses an image stored on IPFS, your browser may contact ipfs.io in the background to load it — even if you never directly visit that site.
+
+Risks:
+Because anyone can upload content to IPFS, the same gateway (ipfs.io) can be used to host both legitimate and malicious files (like phishing pages or malware). That’s why security systems treat it as potentially risky, especially when accessed unexpectedly.
+
+⸻
+
+3. Investigation Summary
+
+A detailed investigation was conducted using Splunk Enterprise Security and multiple data sources:
+	•	Firewall Logs: Confirmed 29 blocked outbound attempts to ipfs.io with the referrer domain mexc.com.
+	•	DNS Logs: Showed normal lookups for mexc.com and a reverse (PTR) query for 209.94.90.1 at 01:30 AM, consistent with automatic enrichment by a resolver or security tool.
+	•	Endpoint Logs (Sysmon): Recorded only Event ID 3 (network connection) from FileCoAuth.exe, a legitimate Microsoft OneDrive process. No suspicious process creation, file modification, or script execution was detected.
+
+Timeline correlation indicated:
+	•	The activity was triggered by the user’s browser session on mexc.com.
+	•	Third-party or advertisement scripts on that site attempted to load IPFS-hosted resources.
+	•	The firewall effectively blocked these requests, and no payload or file download occurred.
+
+⸻
+
+4. Findings
+	•	Root Cause: Legitimate web activity on mexc.com triggered background requests to IPFS-hosted content via the ipfs.io gateway.
+	•	Impact: None – all connections were blocked, and no malicious behavior was observed.
+	•	Scope: Single user workstation; no similar activity detected across other hosts.
+	•	Classification: False Positive / Benign Event
+	•	Containment: Achieved by existing firewall and endpoint protection controls.
+
+⸻
+
+5. Recommendations
+
+Immediate
+	1.	No further action required on the affected workstation.
+	2.	Continue monitoring for any repeated IPFS-related alerts from other users or systems.
+	3.	Ensure firewall and proxy controls continue to block unsolicited IPFS gateway access.
+
+Preventive / Long-Term
+	1.	Restrict or block public IPFS gateways (ipfs.io, cloudflare-ipfs.com, etc.) if not needed for business operations.
+	2.	Tune Splunk alerts to trigger only when IPFS traffic is allowed or followed by suspicious endpoint activity (e.g., process creation, downloads).
+	3.	User Awareness: Remind employees to avoid non–work-related or high-risk websites, especially cryptocurrency or file-sharing platforms, to protect both personal systems and the corporate network.
+	4.	Maintain endpoint and network visibility (firewall, DNS, Sysmon) for timely detection of any genuine IPFS-based threats.
+
+⸻
+
+6. Conclusion
+
+The detected activity resulted from a benign web resource request associated with normal browsing behavior.
+The organization’s firewall and security controls operated as expected, successfully preventing any data exchange with the external IPFS gateway.
+No malicious content or system compromise was identified.
+The incident has been closed, and recommendations have been documented to further enhance detection accuracy and user awareness.
+
+⸻
