@@ -1,0 +1,217 @@
+# Investigation Playbook
+
+A single reference file you can use for common cases.
+
+---
+
+## 1. Suspicious File Investigation
+
+### File Details
+- Name  
+- Full path  
+- Size  
+- MD5  
+- SHA1  
+- SHA256  
+
+### Checks
+- Confirm location  
+- Check digital signature  
+- Review permissions  
+- Check process tree  
+- Compare hash on VirusTotal  
+
+### Safe Indicators
+- File is in a trusted folder  
+- Signed by trusted vendor  
+- Only one or few AV flags  
+- Matches known version  
+
+### Suspicious Indicators
+- Found in Temp or AppData  
+- Unsigned  
+- Many AV flags  
+- Executes at startup  
+- Drops other files  
+
+### Actions
+- Isolate the file  
+- Run scans  
+- Keep hashes  
+- Document behavior  
+
+---
+
+## 2. Remote Access Alert Review
+
+### Alert Info
+- User  
+- Source IP  
+- Destination IP  
+- App name  
+- Time frame  
+- Country  
+
+### What Triggered It
+- Internal user  
+- External destination  
+- Remote-access tool seen  
+- Not in exceptions list  
+
+### Normal Use
+- Chrome Remote Desktop  
+- TeamViewer  
+- AnyDesk  
+- Vendor support sessions  
+
+### Suspicious Use
+- User denies activity  
+- Late-night activity  
+- Unknown tool  
+- Repeated connections  
+
+### Follow-Up
+- Ask user  
+- Check logs  
+- Review destination owner  
+- Add to exceptions if approved  
+
+---
+
+## 3. Network Connection Investigation
+
+### Details
+- Source  
+- Destination  
+- Ports  
+- Protocol  
+- App  
+- Bytes in/out  
+
+### Checks
+- Reputation of destination  
+- Geo lookup  
+- Known service or CDN  
+- User activity  
+- Firewall logs  
+
+### Safe Indicators
+- Known provider  
+- Expected port  
+- Expected user action  
+
+### Suspicious Indicators
+- Foreign unknown IP  
+- Large outbound data  
+- User denies activity  
+- Matches C2 patterns  
+
+---
+
+## 4. Process Investigation
+
+### Process Details
+- Name  
+- Path  
+- Parent process  
+- Command line  
+- User  
+- Start time  
+
+### Checks
+- Digital signature  
+- Hash lookup  
+- Autoruns  
+- Network usage  
+- DLLs loaded  
+
+### Safe Indicators
+- In Program Files  
+- Signed  
+- Expected parent  
+
+### Suspicious Indicators
+- In Temp or AppData  
+- Unsigned  
+- Injects into others  
+- Unknown network calls  
+
+---
+
+## 5. Email / PST Investigation
+
+### PST Info
+- File name  
+- Size  
+- Hashes  
+- Owner  
+
+### Tools
+- pffexport  
+- readpst  
+- Outlook  
+- pypff  
+
+### Extracted Items
+- Emails  
+- Attachments  
+- Contacts  
+- Calendar entries  
+
+### Things To Check
+- Password reset mails  
+- Financial emails  
+- Phishing  
+- Unknown senders  
+- Suspicious attachments  
+
+### Actions
+- Export contents  
+- Search subjects  
+- Review headers  
+- Flag suspicious items  
+
+---
+
+## 6. Quick Indicators of Compromise
+
+### Host-Based
+- Unknown startup items  
+- Unexpected processes  
+- Unknown scheduled tasks  
+- High CPU network usage  
+
+### Network-Based
+- Outbound traffic to unknown IPs  
+- Remote access sessions  
+- Repeated failed logins  
+
+---
+
+## 7. Evidence Collection Checklist
+
+- File hashes  
+- File paths  
+- Process list  
+- Network connections  
+- Event logs  
+- User confirmation  
+- AV scan results  
+
+---
+
+## 8. Response Steps
+
+### Immediate
+- Contain the host  
+- Capture logs  
+- Isolate suspicious files  
+- Scan fully  
+
+### Follow-Up
+- Patch software  
+- Reset passwords if needed  
+- Update exceptions list  
+- Document incident  
+
+---
